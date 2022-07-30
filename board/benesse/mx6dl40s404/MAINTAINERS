@@ -1,0 +1,6 @@
+Shinken Zemi Challenge Pad TAB-BEE-01 40s404
+M:	Suguru Saito <sg.sgch07@gmail.com>
+S:	Maintained
+F:	board/benesse/40s404/
+F:	include/configs/40s404.h
+F:	configs/mx6dl40s404_defconfig

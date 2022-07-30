@@ -1,0 +1,12 @@
+if TARGET_MX6DL40S404
+
+config SYS_BOARD
+	default "mx6dl40s404"
+
+config SYS_VENDOR
+	default "benesse"
+
+config SYS_CONFIG_NAME
+	default "mx6dl40s404"
+
+endif

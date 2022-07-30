@@ -688,6 +688,17 @@ config TARGET_BRPPT2
           Support
           B&R BRPPT2 platform
           based on Freescale's iMX6 SoC
+
+config TARGET_MX6DL40S404
+	bool "Shinken Zemi Challenge Pad TAB-BEE-01 40S404"
+	depends on MX6DL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	select SUPPORT_SPL
+	imply CMD_DM
+
 endchoice
 
 config SYS_SOC
@@ -747,5 +758,6 @@ source "board/udoo/neo/Kconfig"
 source "board/wandboard/Kconfig"
 source "board/warp/Kconfig"
 source "board/BuR/brppt2/Kconfig"
+source "board/benesse/mx6dl40s404/Kconfig"
 
 endif
