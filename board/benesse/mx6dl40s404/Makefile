@@ -6,4 +6,4 @@
 #
 # (C) Copyright 2011 Freescale Semiconductor, Inc.
 
-obj-y  := mx6dl40s404.o ../../freescale/common/pfuze.o
+obj-y  := mx6dl40s404.o

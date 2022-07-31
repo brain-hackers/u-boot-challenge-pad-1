@@ -35,7 +35,6 @@
 #include <input.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
-#include "../../freescale/common/pfuze.h"
 #include <usb.h>
 #include <usb/ehci-ci.h>
 
@@ -413,28 +412,27 @@ int board_init(void)
 int power_init_board(void)
 {
 	struct pmic *p;
-	unsigned int reg;
+	unsigned int reg, dev_id, rev_id;
 	int ret;
 
-	p = pfuze_common_init(I2C_PMIC);
-	if (!p)
-		return -ENODEV;
-
-	ret = pfuze_mode_init(p, APS_PFM);
-	if (ret < 0)
+	ret = power_pfuze100_init(I2C_PMIC);
+	if (ret == -ENODEV)
 		return ret;
 
-	/* Increase VGEN3 from 2.5 to 2.8V */
-	pmic_reg_read(p, PFUZE100_VGEN3VOL, &reg);
-	reg &= ~LDO_VOL_MASK;
-	reg |= LDOB_2_80V;
-	pmic_reg_write(p, PFUZE100_VGEN3VOL, reg);
+	p = pmic_get("PFUZE100");
+	ret = pmic_probe(p);
+	if (ret)
+		return ret;
 
-	/* Increase VGEN5 from 2.8 to 3V */
-	pmic_reg_read(p, PFUZE100_VGEN5VOL, &reg);
+	pmic_reg_read(p, PFUZE100_DEVICEID, &dev_id);
+	pmic_reg_read(p, PFUZE100_REVID, &rev_id);
+	printf("PMIC: PFUZE100! DEV_ID=0x%x REV_ID=0x%x\n", dev_id, rev_id);
+
+	/* Increase VGEN4 from 1.8 to 2.0V */
+	pmic_reg_read(p, PFUZE100_VGEN4VOL, &reg);
 	reg &= ~LDO_VOL_MASK;
-	reg |= LDOB_3_00V;
-	pmic_reg_write(p, PFUZE100_VGEN5VOL, reg);
+	reg |= LDOB_2_00V;
+	pmic_reg_write(p, PFUZE100_VGEN4VOL, reg);
 
 	return 0;
 }
