@@ -59,7 +59,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define I2C_PAD MUX_PAD_CTRL(I2C_PAD_CTRL)
 
-#define DISP0_PWR_EN	IMX_GPIO_NR(1, 21)
+#define DISP0_PWR_EN	IMX_GPIO_NR(1, 30)
+#define DISP0_BACKLIGHT_PWR_EN	IMX_GPIO_NR(6, 9)
+#define DISP0_LVDS_PWR_EN	IMX_GPIO_NR(6, 10)
 
 #define KEY_VOL_UP	IMX_GPIO_NR(1, 4)
 
@@ -101,58 +103,24 @@ static iomux_v3_cfg_t const usdhc4_pads[] = {
 	MX6_PAD_SD4_DAT7__SD4_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 };
 
-static iomux_v3_cfg_t const rgb_pads[] = {
-	MX6_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DI0_PIN15__IPU1_DI0_PIN15 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DI0_PIN2__IPU1_DI0_PIN02 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DI0_PIN3__IPU1_DI0_PIN03 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DI0_PIN4__IPU1_DI0_PIN04 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT0__IPU1_DISP0_DATA00 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT1__IPU1_DISP0_DATA01 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT2__IPU1_DISP0_DATA02 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT3__IPU1_DISP0_DATA03 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT4__IPU1_DISP0_DATA04 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT5__IPU1_DISP0_DATA05 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT6__IPU1_DISP0_DATA06 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT7__IPU1_DISP0_DATA07 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT8__IPU1_DISP0_DATA08 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT9__IPU1_DISP0_DATA09 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT10__IPU1_DISP0_DATA10 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT11__IPU1_DISP0_DATA11 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT12__IPU1_DISP0_DATA12 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT13__IPU1_DISP0_DATA13 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT14__IPU1_DISP0_DATA14 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT15__IPU1_DISP0_DATA15 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT16__IPU1_DISP0_DATA16 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT17__IPU1_DISP0_DATA17 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT18__IPU1_DISP0_DATA18 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT19__IPU1_DISP0_DATA19 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT20__IPU1_DISP0_DATA20 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT21__IPU1_DISP0_DATA21 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT22__IPU1_DISP0_DATA22 | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT23__IPU1_DISP0_DATA23 | MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
 static iomux_v3_cfg_t const bl_pads[] = {
-	MX6_PAD_SD1_DAT3__GPIO1_IO21 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_ENET_TXD0__GPIO1_IO30	| MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_NANDF_WP_B__GPIO6_IO09	| MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_NANDF_RB0__GPIO6_IO10	| MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-static void enable_backlight(void)
+static void enable_display(struct display_info_t const *dev)
 {
 	SETUP_IOMUX_PADS(bl_pads);
+
+	gpio_request(DISP0_LVDS_PWR_EN, "Display LVDS Power Enable");
+	gpio_direction_output(DISP0_LVDS_PWR_EN, 1);
+
 	gpio_request(DISP0_PWR_EN, "Display Power Enable");
 	gpio_direction_output(DISP0_PWR_EN, 1);
-}
 
-static void enable_rgb(struct display_info_t const *dev)
-{
-	SETUP_IOMUX_PADS(rgb_pads);
-	enable_backlight();
-}
-
-static void enable_lvds(struct display_info_t const *dev)
-{
-	enable_backlight();
+	gpio_request(DISP0_BACKLIGHT_PWR_EN, "Display Backlight Power Enable");
+	gpio_direction_output(DISP0_BACKLIGHT_PWR_EN, 1);
 }
 
 static struct i2c_pads_info mx6dl_i2c_pad_info1 = {
@@ -166,12 +134,6 @@ static struct i2c_pads_info mx6dl_i2c_pad_info1 = {
 		.gpio_mode = MX6_PAD_KEY_ROW3__GPIO4_IO13 | I2C_PAD,
 		.gp = IMX_GPIO_NR(4, 13)
 	}
-};
-
-iomux_v3_cfg_t const di0_pads[] = {
-	MX6_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK,	/* DISP0_CLK */
-	MX6_PAD_DI0_PIN2__IPU1_DI0_PIN02,		/* DISP0_HSYNC */
-	MX6_PAD_DI0_PIN3__IPU1_DI0_PIN03,		/* DISP0_VSYNC */
 };
 
 static void setup_iomux_uart(void)
@@ -243,140 +205,122 @@ int board_mmc_init(struct bd_info *bis)
 #endif
 
 #if defined(CONFIG_VIDEO_IPUV3)
-static void disable_lvds(struct display_info_t const *dev)
-{
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
-
-	int reg = readl(&iomux->gpr[2]);
-
-	reg &= ~(IOMUXC_GPR2_LVDS_CH0_MODE_MASK |
-		 IOMUXC_GPR2_LVDS_CH1_MODE_MASK);
-
-	writel(reg, &iomux->gpr[2]);
-}
-
-static void do_enable_hdmi(struct display_info_t const *dev)
-{
-	disable_lvds(dev);
-	imx_enable_hdmi_phy();
-}
-
 struct display_info_t const displays[] = {{
 	.bus	= -1,
 	.addr	= 0,
-	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= NULL,
-	.enable	= enable_lvds,
+	.enable	= enable_display,
+	.di = 1,
 	.mode	= {
-		.name           = "Hannstar-XGA",
+		.name           = "XGA",
 		.refresh        = 60,
 		.xres           = 1024,
 		.yres           = 768,
-		.pixclock       = 15384,
-		.left_margin    = 160,
-		.right_margin   = 24,
-		.upper_margin   = 29,
-		.lower_margin   = 3,
-		.hsync_len      = 136,
-		.vsync_len      = 6,
-		.sync           = FB_SYNC_EXT,
-		.vmode          = FB_VMODE_NONINTERLACED
-} }, {
-	.bus	= -1,
-	.addr	= 0,
-	.pixfmt	= IPU_PIX_FMT_RGB24,
-	.detect	= detect_hdmi,
-	.enable	= do_enable_hdmi,
-	.mode	= {
-		.name           = "HDMI",
-		.refresh        = 60,
-		.xres           = 1024,
-		.yres           = 768,
-		.pixclock       = 15384,
-		.left_margin    = 160,
-		.right_margin   = 24,
-		.upper_margin   = 29,
-		.lower_margin   = 3,
-		.hsync_len      = 136,
-		.vsync_len      = 6,
-		.sync           = FB_SYNC_EXT,
-		.vmode          = FB_VMODE_NONINTERLACED
-} }, {
-	.bus	= 0,
-	.addr	= 0,
-	.pixfmt	= IPU_PIX_FMT_RGB24,
-	.detect	= NULL,
-	.enable	= enable_rgb,
-	.mode	= {
-		.name           = "SEIKO-WVGA",
-		.refresh        = 60,
-		.xres           = 800,
-		.yres           = 480,
-		.pixclock       = 29850,
-		.left_margin    = 89,
-		.right_margin   = 164,
-		.upper_margin   = 23,
-		.lower_margin   = 10,
-		.hsync_len      = 10,
+		.pixclock       = 15385,
+		.left_margin    = 220,
+		.right_margin   = 40,
+		.upper_margin   = 21,
+		.lower_margin   = 7,
+		.hsync_len      = 60,
 		.vsync_len      = 10,
-		.sync           = 0,
+		.sync           = FB_SYNC_EXT,
 		.vmode          = FB_VMODE_NONINTERLACED
-} } };
+	}
+}};
 size_t display_count = ARRAY_SIZE(displays);
 
 static void setup_display(void)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	/* struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR; */
 	int reg;
 
-	/* Setup HSYNC, VSYNC, DISP_CLK for debugging purposes */
-	SETUP_IOMUX_PADS(di0_pads);
-
-	enable_ipu_clock();
-	imx_setup_hdmi();
-
-	/* Turn on LDB0, LDB1, IPU,IPU DI0 clocks */
+	/* Disable ipu1_clk/ipu1_di_clk_x/ldb_dix_clk. */
 	reg = readl(&mxc_ccm->CCGR3);
-	reg |=  MXC_CCM_CCGR3_LDB_DI0_MASK | MXC_CCM_CCGR3_LDB_DI1_MASK;
+	reg &= ~0xC033;
 	writel(reg, &mxc_ccm->CCGR3);
 
-	/* set LDB0, LDB1 clk select to 011/011 */
-	reg = readl(&mxc_ccm->cs2cdr);
-	reg &= ~(MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_MASK
-		 | MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_MASK);
-	reg |= (3 << MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_OFFSET)
-	      | (3 << MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_OFFSET);
-	writel(reg, &mxc_ccm->cs2cdr);
+	/*
+	 * IPU1 HSP clock tree:
+	 * osc_clk(24M)->pll3_usb_otg_main_clk(480M)->
+	 * pll3_pfd_540M(540M)->ipu1_clk(270M)
+	 */
+	/* pll3_usb_otg_main_clk */
+	/* divider */
+	writel(0x3, ANATOP_BASE_ADDR + 0x18);
 
+	/* pll3_pfd_540M */
+	/* divider */
+	writel(0x3F << 8, ANATOP_BASE_ADDR + 0xF8);
+	writel(0x10 << 8, ANATOP_BASE_ADDR + 0xF4);
+	/* enable */
+	writel(0x1 << 15, ANATOP_BASE_ADDR + 0xF8);
+
+	/* ipu1_clk */
+	reg = readl(&mxc_ccm->cscdr3);
+	/* source */
+	reg |= (0x3 << 9);
+	/* divider */
+	reg &= ~(0x7 << 11);
+	reg |= (0x1 << 11);
+	writel(reg, &mxc_ccm->cscdr3);
+
+	/*
+	 * ipu1_pixel_clk_x clock tree:
+	 * osc_clk(24M)->pll2_528_bus_main_clk(528M)->
+	 * pll2_pfd_352M(452.57M)->ldb_dix_clk(64.65M)->
+	 * ipu1_di_clk_x(64.65M)->ipu1_pixel_clk_x(64.65M)
+	 */
+	/* pll2_528_bus_main_clk */
+	/* divider */
+	writel(0x1, ANATOP_BASE_ADDR + 0x34);
+
+	/* pll2_pfd_352M */
+	/* disable */
+	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x104);
+	/* divider */
+	writel(0x3F, ANATOP_BASE_ADDR + 0x108);
+	writel(0x15, ANATOP_BASE_ADDR + 0x104);
+
+	/* ldb_dix_clk */
+	/* source */
+	reg = readl(&mxc_ccm->cs2cdr);
+	reg &= ~(0x3F << 9);
+	reg |= (0x9 << 9);
+	writel(reg, &mxc_ccm->cs2cdr);
+	/* divider */
 	reg = readl(&mxc_ccm->cscmr2);
-	reg |= MXC_CCM_CSCMR2_LDB_DI0_IPU_DIV | MXC_CCM_CSCMR2_LDB_DI1_IPU_DIV;
+	reg |= (0x3 << 10);
 	writel(reg, &mxc_ccm->cscmr2);
 
+	/* pll2_pfd_352M */
+	/* enable after ldb_dix_clk source is set */
+	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x108);
+
+	/* ipu1_di_clk_x */
+	/* source */
 	reg = readl(&mxc_ccm->chsccdr);
-	reg |= (CHSCCDR_CLK_SEL_LDB_DI0
-		<< MXC_CCM_CHSCCDR_IPU1_DI0_CLK_SEL_OFFSET);
-	reg |= (CHSCCDR_CLK_SEL_LDB_DI0
-		<< MXC_CCM_CHSCCDR_IPU1_DI1_CLK_SEL_OFFSET);
+	reg &= ~0xE07;
+	reg |= 0x803;
 	writel(reg, &mxc_ccm->chsccdr);
 
-	reg = IOMUXC_GPR2_BGREF_RRMODE_EXTERNAL_RES
-	     | IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_LOW
-	     | IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW
-	     | IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG
-	     | IOMUXC_GPR2_DATA_WIDTH_CH1_18BIT
-	     | IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG
-	     | IOMUXC_GPR2_DATA_WIDTH_CH0_18BIT
-	     | IOMUXC_GPR2_LVDS_CH0_MODE_DISABLED
-	     | IOMUXC_GPR2_LVDS_CH1_MODE_ENABLED_DI0;
-	writel(reg, &iomux->gpr[2]);
+	enable_ipu_clock();
+	/* Enable ipu1/ipu1_dix/ldb_dix clocks. */
+	reg = readl(&mxc_ccm->CCGR3);
+	reg |= 0xC033;
+	writel(reg, &mxc_ccm->CCGR3);
 
-	reg = readl(&iomux->gpr[3]);
-	reg = (reg & ~(IOMUXC_GPR3_LVDS1_MUX_CTL_MASK
-			| IOMUXC_GPR3_HDMI_MUX_CTL_MASK))
-	    | (IOMUXC_GPR3_MUX_SRC_IPU1_DI0
-	       << IOMUXC_GPR3_LVDS1_MUX_CTL_OFFSET);
-	writel(reg, &iomux->gpr[3]);
+	/*
+	 * LVDS0 mux to IPU1 DI0.
+	 * LVDS1 mux to IPU1 DI1.
+	 */
+	reg = readl(IOMUXC_BASE_ADDR + 0xC);
+	reg &= ~(0x000003C0);
+	reg |= 0x00000100;
+	writel(reg, IOMUXC_BASE_ADDR + 0xC);
+
+	writel(0x48C, IOMUXC_BASE_ADDR + 0x8); /*24bit*/
 }
 #endif /* CONFIG_VIDEO_IPUV3 */
 

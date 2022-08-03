@@ -65,9 +65,15 @@
 /* Framebuffer */
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
-#define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 
 #define CONFIG_USBD_HS
+
+/* PWM */
+#define CONFIG_IMX6_PWM_PER_CLK 66000000
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"splashimage=" __stringify(CONFIG_LOADADDR) "\0" \
+	"splashpos=m,m\0" \
 
 #endif /* __MX6DL40S404_CONFIG_H */
