@@ -59,10 +59,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define I2C_PAD MUX_PAD_CTRL(I2C_PAD_CTRL)
 
-#define DISP0_PWR_EN	IMX_GPIO_NR(1, 30)
-#define DISP0_BACKLIGHT_PWR_EN	IMX_GPIO_NR(6, 9)
-#define DISP0_LVDS_PWR_EN	IMX_GPIO_NR(6, 10)
-
 #define KEY_VOL_UP	IMX_GPIO_NR(1, 4)
 
 int dram_init(void)
@@ -102,26 +98,6 @@ static iomux_v3_cfg_t const usdhc4_pads[] = {
 	MX6_PAD_SD4_DAT6__SD4_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD4_DAT7__SD4_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 };
-
-static iomux_v3_cfg_t const bl_pads[] = {
-	MX6_PAD_ENET_TXD0__GPIO1_IO30	| MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_NANDF_WP_B__GPIO6_IO09	| MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_NANDF_RB0__GPIO6_IO10	| MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
-static void enable_display(struct display_info_t const *dev)
-{
-	SETUP_IOMUX_PADS(bl_pads);
-
-	gpio_request(DISP0_LVDS_PWR_EN, "Display LVDS Power Enable");
-	gpio_direction_output(DISP0_LVDS_PWR_EN, 1);
-
-	gpio_request(DISP0_PWR_EN, "Display Power Enable");
-	gpio_direction_output(DISP0_PWR_EN, 1);
-
-	gpio_request(DISP0_BACKLIGHT_PWR_EN, "Display Backlight Power Enable");
-	gpio_direction_output(DISP0_BACKLIGHT_PWR_EN, 1);
-}
 
 static struct i2c_pads_info mx6dl_i2c_pad_info1 = {
 	.scl = {
@@ -210,7 +186,7 @@ struct display_info_t const displays[] = {{
 	.addr	= 0,
 	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= NULL,
-	.enable	= enable_display,
+	.enable	= NULL,
 	.di = 1,
 	.mode	= {
 		.name           = "XGA",

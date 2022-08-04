@@ -39,6 +39,14 @@
 			enable-active-high;
 			vin-supply = <&swbst_reg>;
 		};
+
+		reg_lvds: regulator@1 {
+			compatible = "regulator-fixed";
+			reg = <1>;
+			regulator-name = "lvds";
+			enable-active-high;
+			gpio = <&gpio6 10 GPIO_ACTIVE_HIGH>;
+		};
 	};
 
 	gpio-keys {
@@ -80,6 +88,7 @@
 		pwms = <&pwm1 0 50000>;
 		brightness-levels = <0 4 8 16 32 64 128 255>;
 		default-brightness-level = <5>;
+		enable-gpios = <&gpio6 9 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
 
@@ -106,6 +115,11 @@
 
 	panel {
 		compatible = "simple-panel";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_panel>;
+
+		power-supply = <&reg_lvds>;
+		enable-gpios = <&gpio1 30 GPIO_ACTIVE_HIGH>;
 		backlight = <&backlight_lvds>;
 
 		port {
@@ -240,14 +254,11 @@
 };
 
 &iomuxc {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hog>;
-
 	imx6dl-40s404 {
-		pinctrl_hog: hoggrp {
+		pinctrl_gpio_panel: gpio_panelgrp {
 			fsl,pins = <
-				MX6QDL_PAD_ENET_TXD0__GPIO1_IO30	0x1b0b0 /* LCD_POWER */
-				MX6QDL_PAD_NANDF_WP_B__GPIO6_IO09	0x1b0b0 /* LCD_BACKLIGHT_POWER */
+				MX6QDL_PAD_ENET_TXD0__GPIO1_IO30	0x1b0b0 /* LCD_POWER_EN */
+				MX6QDL_PAD_NANDF_WP_B__GPIO6_IO09	0x1b0b0 /* LCD_BACKLIGHT_POWER_EN */
 				MX6QDL_PAD_NANDF_RB0__GPIO6_IO10	0x1b0b0 /* AUX_5V_ENABLE */
 			>;
 		};
