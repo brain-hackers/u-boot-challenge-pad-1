@@ -233,12 +233,15 @@ size_t display_count = ARRAY_SIZE(displays);
 static void setup_display(void)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	/* struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR; */
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
 	int reg;
 
-	/* Disable ipu1_clk/ipu1_di_clk_x/ldb_dix_clk. */
+	/* Disable ipu1_clk/ipu1_di_clk_1/ldb_di1_clk. */
+	disable_ipu_clock();
 	reg = readl(&mxc_ccm->CCGR3);
-	reg &= ~0xC033;
+	reg &= ~MXC_CCM_CCGR3_IPU1_IPU_DI1_MASK;
+	reg &= ~MXC_CCM_CCGR3_LDB_DI1_MASK;
 	writel(reg, &mxc_ccm->CCGR3);
 
 	/*
@@ -247,23 +250,24 @@ static void setup_display(void)
 	 * pll3_pfd_540M(540M)->ipu1_clk(270M)
 	 */
 	/* pll3_usb_otg_main_clk */
-	/* divider */
-	writel(0x3, ANATOP_BASE_ADDR + 0x18);
+	/* divider: Fout=Fref*20(0) */
+	writel(BM_ANADIG_USB1_PLL_480_CTRL_DIV_SELECT,
+			&anatop->usb1_pll_480_ctrl_clr);
 
 	/* pll3_pfd_540M */
-	/* divider */
-	writel(0x3F << 8, ANATOP_BASE_ADDR + 0xF8);
-	writel(0x10 << 8, ANATOP_BASE_ADDR + 0xF4);
+	/* divider: 16 */
+	writel(BM_ANADIG_PFD_480_PFD1_FRAC, &anatop->pfd_480_clr);
+	writel(BF_ANADIG_PFD_480_PFD1_FRAC(16), &anatop->pfd_480_set);
 	/* enable */
-	writel(0x1 << 15, ANATOP_BASE_ADDR + 0xF8);
+	writel(BM_ANADIG_PFD_480_PFD1_CLKGATE, &anatop->pfd_480_clr);
 
 	/* ipu1_clk */
 	reg = readl(&mxc_ccm->cscdr3);
-	/* source */
-	reg |= (0x3 << 9);
-	/* divider */
-	reg &= ~(0x7 << 11);
-	reg |= (0x1 << 11);
+	/* source: PLL3 PFD1(3) */
+	reg |= (3 << MXC_CCM_CSCDR3_IPU1_HSP_CLK_SEL_OFFSET);
+	/* divider: divide by 2(1) */
+	reg &= ~MXC_CCM_CSCDR3_IPU1_HSP_PODF_MASK;
+	reg |= (1 << MXC_CCM_CSCDR3_IPU1_HSP_PODF_OFFSET);
 	writel(reg, &mxc_ccm->cscdr3);
 
 	/*
@@ -273,54 +277,78 @@ static void setup_display(void)
 	 * ipu1_di_clk_x(64.65M)->ipu1_pixel_clk_x(64.65M)
 	 */
 	/* pll2_528_bus_main_clk */
-	/* divider */
-	writel(0x1, ANATOP_BASE_ADDR + 0x34);
+	/* divider: Fout=Fref*22(1) */
+	writel(BF_ANADIG_PLL_SYS_DIV_SELECT(1), &anatop->pll_528_set);
 
 	/* pll2_pfd_352M */
 	/* disable */
-	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x104);
-	/* divider */
-	writel(0x3F, ANATOP_BASE_ADDR + 0x108);
-	writel(0x15, ANATOP_BASE_ADDR + 0x104);
+	writel(BM_ANADIG_PFD_528_PFD0_CLKGATE, &anatop->pfd_528_set);
+	/* divider: 21 */
+	writel(BM_ANADIG_PFD_528_PFD0_FRAC, &anatop->pfd_528_clr);
+	writel(BF_ANADIG_PFD_528_PFD0_FRAC(21), &anatop->pfd_528_set);
 
 	/* ldb_dix_clk */
-	/* source */
 	reg = readl(&mxc_ccm->cs2cdr);
-	reg &= ~(0x3F << 9);
-	reg |= (0x9 << 9);
+	/* source
+	 * ldb_di0: PLL2 PFD0(1)
+	 * ldb_di1: PLL2 PFD0(1)
+	 */
+	reg &= ~MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_MASK;
+	reg &= ~MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_MASK;
+	reg |= (1 << MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_OFFSET);
+	reg |= (1 << MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_OFFSET);
 	writel(reg, &mxc_ccm->cs2cdr);
 	/* divider */
 	reg = readl(&mxc_ccm->cscmr2);
-	reg |= (0x3 << 10);
+	reg |= MXC_CCM_CSCMR2_LDB_DI0_IPU_DIV;
+	reg |= MXC_CCM_CSCMR2_LDB_DI1_IPU_DIV;
 	writel(reg, &mxc_ccm->cscmr2);
 
 	/* pll2_pfd_352M */
 	/* enable after ldb_dix_clk source is set */
-	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x108);
+	writel(BM_ANADIG_PFD_528_PFD0_CLKGATE, &anatop->pfd_528_clr);
 
 	/* ipu1_di_clk_x */
-	/* source */
 	reg = readl(&mxc_ccm->chsccdr);
-	reg &= ~0xE07;
-	reg |= 0x803;
+	/* source
+	 * ipu1_di0_clk_sel: ldb_di0_clk(3)
+	 * ipu1_di1_clk_sel: ldb_di1_clk(4)
+	 */
+	reg &= ~MXC_CCM_CHSCCDR_IPU1_DI0_CLK_SEL_MASK;
+	reg &= ~MXC_CCM_CHSCCDR_IPU1_DI1_CLK_SEL_MASK;
+	reg |= (3 << MXC_CCM_CHSCCDR_IPU1_DI0_CLK_SEL_OFFSET);
+	reg |= (4 << MXC_CCM_CHSCCDR_IPU1_DI1_CLK_SEL_OFFSET);
 	writel(reg, &mxc_ccm->chsccdr);
 
+	/* Enable ipu1/ipu1_di1/ldb_di1 clocks. */
 	enable_ipu_clock();
-	/* Enable ipu1/ipu1_dix/ldb_dix clocks. */
 	reg = readl(&mxc_ccm->CCGR3);
-	reg |= 0xC033;
+	reg |= MXC_CCM_CCGR3_IPU1_IPU_DI1_MASK;
+	reg |= MXC_CCM_CCGR3_LDB_DI1_MASK;
 	writel(reg, &mxc_ccm->CCGR3);
 
 	/*
-	 * LVDS0 mux to IPU1 DI0.
-	 * LVDS1 mux to IPU1 DI1.
+	 * LVDS mux control
+	 * LVDS0: IPU1 DI0
+	 * LVDS1: IPU1 DI1
 	 */
-	reg = readl(IOMUXC_BASE_ADDR + 0xC);
-	reg &= ~(0x000003C0);
-	reg |= 0x00000100;
-	writel(reg, IOMUXC_BASE_ADDR + 0xC);
+	reg = readl(&iomux->gpr[3]);
+	reg &= ~IOMUXC_GPR3_LVDS0_MUX_CTL_MASK;
+	reg &= ~IOMUXC_GPR3_LVDS1_MUX_CTL_MASK;
+	reg |= (IOMUXC_GPR3_MUX_SRC_IPU1_DI0 << IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
+	reg |= (IOMUXC_GPR3_MUX_SRC_IPU1_DI1 << IOMUXC_GPR3_LVDS1_MUX_CTL_OFFSET);
+	writel(reg, &iomux->gpr[3]);
 
-	writel(0x48C, IOMUXC_BASE_ADDR + 0x8); /*24bit*/
+	/* LDB Control Register */
+	reg  = IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_LOW;
+	reg |= IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_HIGH;
+	reg |= IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG;
+	reg |= IOMUXC_GPR2_DATA_WIDTH_CH1_24BIT;
+	reg |= IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG;
+	reg |= IOMUXC_GPR2_DATA_WIDTH_CH0_18BIT;
+	reg |= IOMUXC_GPR2_LVDS_CH1_MODE_ENABLED_DI1;
+	reg |= IOMUXC_GPR2_LVDS_CH0_MODE_DISABLED;
+	writel(reg, &iomux->gpr[2]);
 }
 #endif /* CONFIG_VIDEO_IPUV3 */
 
